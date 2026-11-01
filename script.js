@@ -20,7 +20,7 @@ let tasks = [
   "เข้าสำรวจหน้างาน CB Trip อาคารบำบัดน้ำเสีย"
 ];
 
-// โหลดประวัติการทำงานจาก LocalStorage ของเครื่อง (ถ้ามี)
+// โหลดประวัติการทำงานจาก LocalStorage ของเครื่อง
 let otHistory = JSON.parse(localStorage.getItem('otHistoryRecords')) || [];
 let yearlyChart = null;
 
@@ -32,18 +32,41 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('workDate').value = today.toISOString().split('T')[0];
   document.getElementById('filterMonth').value = today.toISOString().slice(0, 7);
 
+  // 💡 โหลดค่าเวลาล่าสุดที่ผู้ใช้เคยกรอกไว้ (ถ้ามี) ถ้าไม่มีให้ใช้ค่าเริ่มต้น 00:00
+  const savedStartTime = localStorage.getItem('lastStartTime');
+  const savedEndTime = localStorage.getItem('lastEndTime');
+
+  if (savedStartTime) {
+    document.getElementById('startTime').value = savedStartTime;
+  } else {
+    document.getElementById('startTime').value = "00:00";
+  }
+
+  if (savedEndTime) {
+    document.getElementById('endTime').value = savedEndTime;
+  } else {
+    document.getElementById('endTime').value = "00:00";
+  }
+
   renderTasks();
   renderStaffCheckboxes();
   calculateTime();
   
-  // โหลดและแสดงประวัติจากเครื่อง
   renderHistory();
   updateMonthlySummary();
   initYearlyChart();
 
-  // ผูกเหตุการณ์ (Event Listeners) กับปุ่มต่างๆ
-  document.getElementById('startTime').addEventListener('change', calculateTime);
-  document.getElementById('endTime').addEventListener('change', calculateTime);
+  // ผูกเหตุการณ์ (Event Listeners) กับช่องเวลาเพื่อให้บันทึกค่าอัตโนมัติทันทีที่เปลี่ยน
+  document.getElementById('startTime').addEventListener('change', (e) => {
+    localStorage.setItem('lastStartTime', e.target.value);
+    calculateTime();
+  });
+
+  document.getElementById('endTime').addEventListener('change', (e) => {
+    localStorage.setItem('lastEndTime', e.target.value);
+    calculateTime();
+  });
+
   document.getElementById('addTaskBtn').addEventListener('click', addNewTaskField);
   document.getElementById('addNewStaffBtn').addEventListener('click', addNewStaffPrompt);
   document.getElementById('generateTextBtn').addEventListener('click', generateOutputText);
@@ -116,34 +139,29 @@ function calculateTime() {
 }
 
 // ==========================================
-// 4. ฟังก์ชันรีเซ็ตข้อมูลฟอร์ม (ตั้งเวลาเป็น 00:00 และวันที่เลือกใหม่ได้)
+// 4. ฟังก์ชันรีเซ็ตข้อมูลฟอร์ม
 // ==========================================
 function resetFormInputs() {
   if (confirm("คุณต้องการล้างข้อมูลในฟอร์มทั้งหมดให้ว่างใช่หรือไม่?")) {
-    // รีเซ็ตวันที่เป็นปัจจุบัน (สามารถกดเลือกเปลี่ยนวันอื่นๆ ได้ตามต้องการ)
     const today = new Date();
     document.getElementById('workDate').value = today.toISOString().split('T')[0];
 
-    // รีเซ็ตเวลาเริ่มงานและเลิกงานเป็น 00:00 ตามคำขอ
+    // รีเซ็ตเวลาเป็น 00:00 และล้างค่าความจำใน LocalStorage ของเวลาด้วย
     document.getElementById('startTime').value = "00:00";
     document.getElementById('endTime').value = "00:00";
+    localStorage.removeItem('lastStartTime');
+    localStorage.removeItem('lastEndTime');
 
-    // เคลียร์ค่าโครงการ สถานที่ และปัญหาอุปสรรค
     document.getElementById('projectName').value = "";
     document.getElementById('locationName').value = "";
     document.getElementById('obstacleText').value = "-";
 
-    // ล้างรายละเอียดงานให้เหลือบรรทัดว่าง 1 บรรทัด
     tasks = [""];
     renderTasks();
 
-    // เอาติ๊กถูกรายชื่อพนักงานออกทั้งหมด
     document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
-
-    // ล้างกล่องข้อความผลลัพธ์
     document.getElementById('outputResult').value = "";
 
-    // คำนวณเวลาใหม่
     calculateTime();
 
     alert("🔄 รีเซ็ตข้อมูลฟอร์มเรียบร้อยแล้ว!");
@@ -283,7 +301,7 @@ function copyToClipboard() {
 }
 
 // ==========================================
-// 10. ฟังก์ชันบันทึกประวัติลง LocalStorage (เครื่อง)
+// 10. ฟังก์ชันบันทึกประวัติลง LocalStorage
 // ==========================================
 function saveOTRecord() {
   const rawDate = document.getElementById('workDate').value;
