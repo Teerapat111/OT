@@ -1,8 +1,6 @@
 // ==========================================
 // 1. คลังข้อมูลเริ่มต้น (Initial Data State)
 // ==========================================
-
-// รายชื่อพนักงานเริ่มต้น
 let staffList = [
   "นาย ธีระภัทร ทรัพย์ทับมา",
   "นาย วัชรพล แสงทับทิม",
@@ -16,35 +14,34 @@ let staffList = [
   "นาย ศิวณัฐ    จิตต์ประสาท"
 ];
 
-// รายการงานเริ่มต้น 3 หัวข้อ
 let tasks = [
   "ทำ Floor Plan จำนวนโคมไฟ งาน F14",
   "สำรวจหน้างานและปิดเคส CM",
   "เข้าสำรวจหน้างาน CB Trip อาคารบำบัดน้ำเสีย"
 ];
 
-// โหลดประวัติการทำงานจาก LocalStorage ของเบราว์เซอร์
+// โหลดประวัติการทำงานจาก LocalStorage ของเครื่อง (ถ้ามี)
 let otHistory = JSON.parse(localStorage.getItem('otHistoryRecords')) || [];
-let yearlyChart = null; // ตัวแปรเก็บออบเจกต์กราฟ Chart.js
+let yearlyChart = null;
 
 // ==========================================
 // 2. ฟังก์ชันเริ่มต้นทำงานเมื่อโหลดหน้าเว็บ
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-  // ตั้งค่าวันที่ปัจจุบันลงในช่องอินพุตวันที่
   const today = new Date();
   document.getElementById('workDate').value = today.toISOString().split('T')[0];
   document.getElementById('filterMonth').value = today.toISOString().slice(0, 7);
 
-  // เรียกฟังก์ชันเรนเดอร์ส่วนต่างๆ ของหน้าเว็บ
   renderTasks();
   renderStaffCheckboxes();
   calculateTime();
+  
+  // โหลดและแสดงประวัติจากเครื่อง
   renderHistory();
-  initYearlyChart();
   updateMonthlySummary();
+  initYearlyChart();
 
-  // ผูกเหตุการณ์ (Event Listeners) กับปุ่มและช่องกรอกต่างๆ
+  // ผูกเหตุการณ์ (Event Listeners) กับปุ่มต่างๆ
   document.getElementById('startTime').addEventListener('change', calculateTime);
   document.getElementById('endTime').addEventListener('change', calculateTime);
   document.getElementById('addTaskBtn').addEventListener('click', addNewTaskField);
@@ -54,15 +51,15 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('copyTextBtn').addEventListener('click', copyToClipboard);
   document.getElementById('filterMonth').addEventListener('change', updateMonthlySummary);
   document.getElementById('printHistoryBtn').addEventListener('click', printActiveText);
-  document.getElementById('resetFormBtn').addEventListener('click', resetFormInputs); // ปุ่มรีเซ็ตฟอร์ม
+  document.getElementById('resetFormBtn').addEventListener('click', resetFormInputs);
 });
 
 // ==========================================
 // 3. ฟังก์ชันคำนวณเวลาและโอที (Time Calculation)
 // ==========================================
 function calculateTime() {
-  const startVal = document.getElementById('startTime').value; // เวลาเริ่มงาน
-  const endVal = document.getElementById('endTime').value;     // เวลาเลิกงาน
+  const startVal = document.getElementById('startTime').value;
+  const endVal = document.getElementById('endTime').value;
 
   if (!startVal || !endVal) return;
 
@@ -119,31 +116,42 @@ function calculateTime() {
 }
 
 // ==========================================
-// 4. ฟังก์ชันรีเซ็ตข้อมูลฟอร์มให้ว่าง (ตามคำขอ)
+// 4. ฟังก์ชันรีเซ็ตข้อมูลฟอร์ม (ตั้งเวลาเป็น 00:00 และวันที่เลือกใหม่ได้)
 // ==========================================
 function resetFormInputs() {
-  if (confirm("คุณต้องการล้างข้อมูลในฟอร์มทั้งหมดให้ว่างใช่หรือไม่? (ประวัติย้อนหลังจะไม่หายไป)")) {
-    // ล้างค่าช่องข้อความโครงการ สถานที่ และปัญหาอุปสรรค
+  if (confirm("คุณต้องการล้างข้อมูลในฟอร์มทั้งหมดให้ว่างใช่หรือไม่?")) {
+    // รีเซ็ตวันที่เป็นปัจจุบัน (สามารถกดเลือกเปลี่ยนวันอื่นๆ ได้ตามต้องการ)
+    const today = new Date();
+    document.getElementById('workDate').value = today.toISOString().split('T')[0];
+
+    // รีเซ็ตเวลาเริ่มงานและเลิกงานเป็น 00:00 ตามคำขอ
+    document.getElementById('startTime').value = "00:00";
+    document.getElementById('endTime').value = "00:00";
+
+    // เคลียร์ค่าโครงการ สถานที่ และปัญหาอุปสรรค
     document.getElementById('projectName').value = "";
     document.getElementById('locationName').value = "";
     document.getElementById('obstacleText').value = "-";
 
-    // เคลียร์รายละเอียดงานทั้งหมดให้ว่าง
+    // ล้างรายละเอียดงานให้เหลือบรรทัดว่าง 1 บรรทัด
     tasks = [""];
     renderTasks();
 
-    // ยกเลิกการติ๊กเช็คบ็อกซ์พนักงานทั้งหมด
+    // เอาติ๊กถูกรายชื่อพนักงานออกทั้งหมด
     document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
 
-    // ล้างช่องแสดงข้อความผลลัพธ์
+    // ล้างกล่องข้อความผลลัพธ์
     document.getElementById('outputResult').value = "";
+
+    // คำนวณเวลาใหม่
+    calculateTime();
 
     alert("🔄 รีเซ็ตข้อมูลฟอร์มเรียบร้อยแล้ว!");
   }
 }
 
 // ==========================================
-// 5. ฟังก์ชันจัดการรายการงาน (Tasks Management)
+// 5. ฟังก์ชันจัดการรายการงาน (Tasks)
 // ==========================================
 function renderTasks() {
   const container = document.getElementById('taskList');
@@ -171,7 +179,7 @@ function removeTask(index) {
 }
 
 // ==========================================
-// 6. ฟังก์ชันจัดการรายชื่อพนักงาน (Staff Management)
+// 6. ฟังก์ชันจัดการรายชื่อพนักงาน (Staff)
 // ==========================================
 function renderStaffCheckboxes() {
   const container = document.getElementById('staffCheckboxContainer');
@@ -198,7 +206,7 @@ function addNewStaffPrompt() {
 }
 
 // ==========================================
-// 7. ฟังก์ชันแปลงวันที่เป็นภาษาไทย (Date Formatting)
+// 7. ฟังก์ชันแปลงวันที่เป็นภาษาไทย
 // ==========================================
 function formatThaiDate(dateStr) {
   if (!dateStr) return '';
@@ -212,7 +220,7 @@ function formatThaiDate(dateStr) {
 }
 
 // ==========================================
-// 8. ฟังก์ชันสร้างข้อความขออนุมัติ OT (Output Generator)
+// 8. ฟังก์ชันสร้างข้อความขออนุมัติ OT
 // ==========================================
 function generateOutputText() {
   const rawDate = document.getElementById('workDate').value;
@@ -262,7 +270,7 @@ ${staffTextLines.join('\n')}
 }
 
 // ==========================================
-// 9. ฟังก์ชันคัดลอกข้อความ (Clipboard)
+// 9. ฟังก์ชันคัดลอกข้อความ
 // ==========================================
 function copyToClipboard() {
   const txtArea = document.getElementById('outputResult');
@@ -275,7 +283,7 @@ function copyToClipboard() {
 }
 
 // ==========================================
-// 10. ฟังก์ชันบันทึกประวัติ (Save History)
+// 10. ฟังก์ชันบันทึกประวัติลง LocalStorage (เครื่อง)
 // ==========================================
 function saveOTRecord() {
   const rawDate = document.getElementById('workDate').value;
@@ -299,7 +307,7 @@ function saveOTRecord() {
   otHistory.unshift(newRecord);
   localStorage.setItem('otHistoryRecords', JSON.stringify(otHistory));
 
-  alert('💾 บันทึกประวัติเรียบร้อยแล้ว!');
+  alert('💾 บันทึกประวัติลงเครื่องเรียบร้อยแล้ว!');
   renderHistory();
   updateMonthlySummary();
   initYearlyChart();
@@ -385,7 +393,7 @@ function handleDragEnd() {
 }
 
 // ==========================================
-// 12. ฟังก์ชันสลับลำดับประวัติ (Move History)
+// 12. ฟังก์ชันสลับลำดับประวัติ
 // ==========================================
 function moveHistory(index, direction) {
   const newIndex = index + direction;
@@ -399,7 +407,7 @@ function moveHistory(index, direction) {
 }
 
 // ==========================================
-// 13. ฟังก์ชันโหลดข้อความเก่ามาดู (Load History)
+// 13. ฟังก์ชันโหลดข้อความเก่ามาดู
 // ==========================================
 function loadHistoryToText(id) {
   const rec = otHistory.find(r => r.id == id);
@@ -410,7 +418,7 @@ function loadHistoryToText(id) {
 }
 
 // ==========================================
-// 14. ฟังก์ชันแก้ไขประวัติย้อนหลัง (Edit History)
+// 14. ฟังก์ชันแก้ไขประวัติย้อนหลัง
 // ==========================================
 function editHistory(id) {
   const rec = otHistory.find(r => r.id == id);
@@ -426,7 +434,7 @@ function editHistory(id) {
 }
 
 // ==========================================
-// 15. ฟังก์ชันลบประวัติย้อนหลัง (Delete History)
+// 15. ฟังก์ชันลบประวัติย้อนหลัง
 // ==========================================
 function deleteHistory(id) {
   if (confirm('คุณต้องการลบประวัตินี้ใช่หรือไม่?')) {
@@ -439,7 +447,7 @@ function deleteHistory(id) {
 }
 
 // ==========================================
-// 16. ฟังก์ชันพิมพ์รายงาน (Print Report)
+// 16. ฟังก์ชันพิมพ์รายงาน (Print)
 // ==========================================
 function printActiveText() {
   let textToPrint = document.getElementById('outputResult').value;
@@ -457,13 +465,13 @@ function printActiveText() {
 }
 
 // ==========================================
-// 17. ฟังก์ชันสรุปสถิติ OT รายเดือน (Monthly Summary)
+// 17. ฟังก์ชันสรุปสถิติ OT รายเดือน
 // ==========================================
 function updateMonthlySummary() {
   const selectedMonth = document.getElementById('filterMonth').value;
   if (!selectedMonth) return;
 
-  const monthlyRecords = otHistory.filter(r => r.date.startsWith(selectedMonth));
+  const monthlyRecords = otHistory.filter(r => r.date && r.date.startsWith(selectedMonth));
   const totalMins = monthlyRecords.reduce((sum, r) => sum + r.otMins, 0);
 
   const h = Math.floor(totalMins / 60);
@@ -472,7 +480,7 @@ function updateMonthlySummary() {
 }
 
 // ==========================================
-// 18. ฟังก์ชันวาดกราฟเส้นสรุป OT รายปี (Yearly Chart)
+// 18. ฟังก์ชันวาดกราฟเส้นสรุป OT รายปี
 // ==========================================
 function initYearlyChart() {
   const ctx = document.getElementById('yearlyOtChart').getContext('2d');
@@ -481,10 +489,12 @@ function initYearlyChart() {
   const monthlyData = new Array(12).fill(0);
 
   otHistory.forEach(rec => {
-    const d = new Date(rec.date);
-    if (d.getFullYear() === currentYear) {
-      const monthIdx = d.getMonth();
-      monthlyData[monthIdx] += (rec.otMins / 60);
+    if (rec.date) {
+      const d = new Date(rec.date);
+      if (d.getFullYear() === currentYear) {
+        const monthIdx = d.getMonth();
+        monthlyData[monthIdx] += (rec.otMins / 60);
+      }
     }
   });
 

@@ -6,36 +6,36 @@
   <title>ระบบขออนุมัติ OT & บันทึกประวัติ</title>
   <!-- โหลดฟอนต์ Noto Sans Thai และ Inter จาก Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- โหลดไลบรารี Chart.js สำหรับวาดกราฟ -->
+  <!-- โหลดไลบรารี Chart.js สำหรับวาดกราฟสถิติ -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- เชื่อมโยงไฟล์สไตล์ CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <!-- [ตำแหน่งที่ 1] คอนเทนเนอร์หลักของแอปพลิเคชัน จัดกึ่งกลางหน้าจอ -->
+  <!-- คอนเทนเนอร์หลักของแอปพลิเคชัน จัดกึ่งกลางหน้าจอ -->
   <div class="app-container">
     
-    <!-- [ตำแหน่งที่ 2] ส่วนหัวของเว็บไซต์ (โลโก้และชื่อระบบ) -->
+    <!-- ส่วนหัวของเว็บไซต์ -->
     <header class="app-header">
       <h1>ระบบขออนุมัติ OT</h1>
-      <p>คำนวณเวลา สรุปข้อความ และบันทึกประวัติประจำเดือน/ปี</p>
+      <p>คำนวณเวลา สรุปข้อความ และบันทึกประวัติประจำเดือน/ปี (Local Storage)</p>
     </header>
 
-    <!-- [ตำแหน่งที่ 3] พาเนลฟอร์มกรอกข้อมูลขออนุมัติ OT -->
+    <!-- ส่วนที่ 1: ฟอร์มกรอกข้อมูลขออนุมัติ -->
     <section class="panel">
-      <!-- หัวข้อฟอร์ม พร้อมปุ่มรีเซ็ตข้อมูล -->
       <div class="section-title-bar">
         <h2>📝 กรอกข้อมูลขออนุมัติ</h2>
         <button type="button" id="resetFormBtn" class="btn btn-warning btn-sm">🔄 รีเซ็ตข้อมูลฟอร์ม</button>
       </div>
       <br>
 
-      <!-- [ตำแหน่งที่ 3.1] แถวข้อมูลทั่วไป: วันที่, ชื่อโครงการ, สถานที่ (เรียง 3 คอลัมน์บน PC) -->
+      <!-- แถวข้อมูลทั่วไป 3 คอลัมน์ (วันที่, โครงการ, สถานที่) -->
       <div class="form-grid-3">
         <div class="form-group">
           <label>📅 วันที่ปฏิบัติงาน</label>
-          <input type="date" id="workDate" class="mac-input" step="60">
+          <!-- 💡 แก้ไข: เอา step="60" ออกแล้ว เพื่อให้กดเลือกวันอื่นๆ ได้อิสระทุกวัน -->
+          <input type="date" id="workDate" class="mac-input">
         </div>
         <div class="form-group">
           <label>🏗️ ชื่อโครงการ</label>
@@ -47,24 +47,24 @@
         </div>
       </div>
 
-      <!-- [ตำแหน่งที่ 3.2] แถวเลือกเวลาเริ่มงาน และ เวลาเลิกงาน -->
+      <!-- แถวเวลาเริ่มและเลิกงาน (ช่องเวลาใส่ step="60" ได้ปกติ) -->
       <div class="form-grid time-grid">
         <div class="form-group">
           <label>🕑 เวลาเริ่มงาน</label>
-          <input type="time" id="startTime" class="mac-input" value="07:00" step="60">
+          <input type="time" id="startTime" class="mac-input" value="00:00" step="60">
         </div>
         <div class="form-group">
           <label>🕔 เวลาเลิกงาน</label>
-          <input type="time" id="endTime" class="mac-input" value="19:36" step="60">
+          <input type="time" id="endTime" class="mac-input" value="00:00" step="60">
         </div>
       </div>
 
-      <!-- กล่องแสดงผลสรุปการคำนวณเวลาและ OT -->
+      <!-- กล่องสรุปผลเวลา -->
       <div id="timeSummaryBox" class="time-summary-card"></div>
 
       <hr class="divider">
 
-      <!-- [ตำแหน่งที่ 3.3] ส่วนจัดการรายละเอียดงาน -->
+      <!-- ส่วนรายละเอียดงาน -->
       <div class="form-group">
         <div class="section-title-bar">
           <label>📝 รายละเอียดงาน (เดินทางกลับ Office จะถูกต่อท้ายให้อัตโนมัติ)</label>
@@ -73,7 +73,7 @@
         <div id="taskList" class="task-list-container"></div>
       </div>
 
-      <!-- ช่องกรอกปัญหาและอุปสรรค -->
+      <!-- ช่องปัญหาและอุปสรรค -->
       <div class="form-group">
         <label>‼️ ปัญหาและอุปสรรค</label>
         <input type="text" id="obstacleText" class="mac-input" value="-">
@@ -81,7 +81,7 @@
 
       <hr class="divider">
 
-      <!-- [ตำแหน่งที่ 3.4] ส่วนเลือกรายชื่อพนักงานปฏิบัติงาน -->
+      <!-- ส่วนเลือกรายชื่อพนักงาน -->
       <div class="form-group">
         <div class="section-title-bar">
           <label>👷‍♂️ เลือกผู้ปฏิบัติงาน</label>
@@ -90,14 +90,14 @@
         <div id="staffCheckboxContainer" class="staff-grid"></div>
       </div>
 
-      <!-- ปุ่มดำเนินการหลัก (สรุปข้อความ & บันทึกประวัติ) -->
+      <!-- ปุ่มกดหลัก (สรุปข้อความ & บันทึกประวัติ) -->
       <div class="action-buttons">
         <button type="button" id="generateTextBtn" class="btn btn-primary">⚡ สรุปข้อความ</button>
-        <button type="button" id="saveRecordBtn" class="btn btn-success">💾 บันทึกประวัติลงระบบ</button>
+        <button type="button" id="saveRecordBtn" class="btn btn-success">💾 บันทึกประวัติลงเครื่อง</button>
       </div>
     </section>
 
-    <!-- [ตำแหน่งที่ 4] พาเนลแสดงข้อความสำหรับนำไปส่งอนุมัติ -->
+    <!-- ส่วนที่ 2: แสดงข้อความสรุปพร้อมปุ่มคัดลอก -->
     <section class="panel">
       <h2>📋 สรุปข้อความสำหรับส่งอนุมัติ</h2>
       <textarea id="outputResult" class="mac-textarea" readonly placeholder="กดปุ่ม 'สรุปข้อความ' เพื่อสร้างข้อความขออนุมัติ..."></textarea>
@@ -106,7 +106,7 @@
       </div>
     </section>
 
-    <!-- [ตำแหน่งที่ 5] พาเนลสถิติโอทีรายเดือน และกราฟรายปี -->
+    <!-- ส่วนที่ 3: สถิติและกราฟสรุปรายปี -->
     <section class="panel">
       <h2>📊 สรุปสถิติโอที (OT Summary & Analytics)</h2>
       
@@ -121,14 +121,13 @@
         </div>
       </div>
 
-      <!-- กล่องแสดงกราฟ (จำกัดความสูงไม่ให้ยืดยาว) -->
       <div class="chart-wrapper">
         <h3>📈 กราฟสรุปชั่วโมง OT รายเดือนตลอดทั้งปี</h3>
         <canvas id="yearlyOtChart"></canvas>
       </div>
     </section>
 
-    <!-- [ตำแหน่งที่ 6] พาเนลประวัติบันทึกการทำ OT ย้อนหลัง -->
+    <!-- ส่วนที่ 4: ประวัติย้อนหลัง -->
     <section class="panel">
       <div class="section-title-bar">
         <h2>📜 ประวัติบันทึกการทำ OT ย้อนหลัง</h2>
@@ -138,9 +137,9 @@
     </section>
   </div>
 
-  <!-- พื้นที่ซ่อนสำหรับจัดการพิมพ์เอกสาร -->
   <div id="printArea" class="print-only"></div>
 
+  <!-- เชื่อมโยงไฟล์สคริปต์หลัก -->
   <script src="script.js"></script>
 </body>
 </html>

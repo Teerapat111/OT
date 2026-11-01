@@ -78,8 +78,6 @@ body {
 /* ==========================================
    3. การจัดกริดฟอร์มข้อมูล (Grid Layouts)
    ========================================== */
-
-/* จัดเรียง 3 คอลัมน์ในแถวเดียว (สำหรับ วันที่, โครงการ, สถานที่ บน PC) */
 .form-grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -87,7 +85,6 @@ body {
   margin-bottom: 14px;
 }
 
-/* จัดเรียง 2 คอลัมน์ (สำหรับเวลาเริ่ม และเวลาเลิกงาน) */
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -95,7 +92,6 @@ body {
   margin-bottom: 14px;
 }
 
-/* [จุดสำคัญที่แก้บน iPhone] เมื่อหน้าจอเล็กกว่า 768px (มือถือ) ให้ยุบทุกคอลัมน์เหลือ 1 แถวแนวตั้ง */
 @media (max-width: 768px) {
   .form-grid-3, .form-grid {
     grid-template-columns: 1fr;
@@ -136,7 +132,6 @@ body {
   background: #ffffff;
 }
 
-/* [แก้ไขการแสดงผลบน iPhone] บังคับสัดส่วนช่องวันที่ เวลา และเดือน ไม่ให้ยืดยาวผิดสัดส่วน */
 input[type="date"],
 input[type="time"],
 input[type="month"] {
