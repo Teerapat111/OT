@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ระบบขออนุมัติ OT & บันทึกประวัติ</title>
+  <!-- โหลดไอคอนโลโก้เว็บ (Favicon) -->
+  <link rel="icon" type="image/png" href="logo.png">
   <!-- โหลดฟอนต์ Noto Sans Thai และ Inter จาก Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- โหลดไลบรารี Chart.js สำหรับวาดกราฟสถิติ -->
@@ -11,9 +13,6 @@
   <!-- เชื่อมโยงไฟล์สไตล์ CSS -->
   <link rel="stylesheet" href="style.css">
 </head>
-<!-- ไอคอนโลโก้เว็บ (Favicon) -->
-<link rel="icon" type="image/png" href="logo.png">
-
 <body>
 
   <!-- คอนเทนเนอร์หลักของแอปพลิเคชัน จัดกึ่งกลางหน้าจอ -->
@@ -37,7 +36,6 @@
       <div class="form-grid-3">
         <div class="form-group">
           <label>📅 วันที่ปฏิบัติงาน</label>
-          <!-- 💡 แก้ไข: เอา step="60" ออกแล้ว เพื่อให้กดเลือกวันอื่นๆ ได้อิสระทุกวัน -->
           <input type="date" id="workDate" class="mac-input">
         </div>
         <div class="form-group">
@@ -50,7 +48,7 @@
         </div>
       </div>
 
-      <!-- แถวเวลาเริ่มและเลิกงาน (ช่องเวลาใส่ step="60" ได้ปกติ) -->
+      <!-- แถวเวลาเริ่มและเลิกงาน -->
       <div class="form-grid time-grid">
         <div class="form-group">
           <label>🕑 เวลาเริ่มงาน</label>
@@ -71,7 +69,10 @@
       <div class="form-group">
         <div class="section-title-bar">
           <label>📝 รายละเอียดงาน (เดินทางกลับ Office จะถูกต่อท้ายให้อัตโนมัติ)</label>
-          <button type="button" id="addTaskBtn" class="btn btn-secondary btn-sm">+ เพิ่มเนื้อหางาน</button>
+          <div class="task-action-btns">
+            <button type="button" id="refreshTaskBtn" class="btn btn-secondary btn-sm" title="รีเฟรชรายละเอียดงาน">🔄 รีเฟรช</button>
+            <button type="button" id="addTaskBtn" class="btn btn-secondary btn-sm">+ เพิ่มเนื้อหางาน</button>
+          </div>
         </div>
         <div id="taskList" class="task-list-container"></div>
       </div>
@@ -88,7 +89,10 @@
       <div class="form-group">
         <div class="section-title-bar">
           <label>👷‍♂️ เลือกผู้ปฏิบัติงาน</label>
-          <button type="button" id="addNewStaffBtn" class="btn btn-secondary btn-sm">+ เพิ่มชื่อพนักงานใหม่</button>
+          <div class="task-action-btns">
+            <button type="button" id="refreshStaffBtn" class="btn btn-secondary btn-sm" title="รีเฟรชรายชื่อพนักงาน">🔄 รีเฟรช</button>
+            <button type="button" id="addNewStaffBtn" class="btn btn-secondary btn-sm">+ เพิ่มชื่อพนักงานใหม่</button>
+          </div>
         </div>
         <div id="staffCheckboxContainer" class="staff-grid"></div>
       </div>
@@ -134,12 +138,12 @@
     <section class="panel">
       <div class="section-title-bar">
         <h2>📜 ประวัติบันทึกการทำ OT ย้อนหลัง</h2>
-        <button type="button" id="printHistoryBtn" class="btn btn-secondary btn-sm">🖨️ ปริ้นท์ประวัติ (ข้อความส่งอนุมัติ)</button>
       </div>
       <div id="historyListContainer" class="history-list"></div>
     </section>
   </div>
 
+  <!-- พื้นสำหรับแสดงข้อความเฉพาะกิจตอนสั่งพิมพ์ (Print) ให้พอดีหน้าเดียว -->
   <div id="printArea" class="print-only"></div>
 
   <!-- เชื่อมโยงไฟล์สคริปต์หลัก -->

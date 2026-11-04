@@ -1,6 +1,3 @@
-/* ==========================================
-   1. ตัวแปรสีและธีมหลัก (Glassmorphism สไตล์ iOS)
-   ========================================== */
 :root {
   --bg-gradient: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
   --panel-bg: rgba(255, 255, 255, 0.75);
@@ -32,9 +29,6 @@ body {
   justify-content: center;
 }
 
-/* ==========================================
-   2. โครงสร้างเลย์เอาต์หลักของหน้าเว็บ
-   ========================================== */
 .app-container {
   width: 100%;
   max-width: 900px;
@@ -75,9 +69,6 @@ body {
   color: #111;
 }
 
-/* ==========================================
-   3. การจัดกริดฟอร์มข้อมูล (Grid Layouts)
-   ========================================== */
 .form-grid-3 {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
@@ -111,9 +102,6 @@ body {
   color: var(--text-secondary);
 }
 
-/* ==========================================
-   4. สไตล์ช่องกรอกข้อมูล (Inputs & Textareas)
-   ========================================== */
 .mac-input {
   width: 100%;
   padding: 10px 14px;
@@ -178,15 +166,17 @@ input[type="month"] {
   align-items: center;
 }
 
+.task-action-btns {
+  display: flex;
+  gap: 6px;
+}
+
 .task-item-row {
   display: flex;
   gap: 8px;
   margin-bottom: 8px;
 }
 
-/* ==========================================
-   5. สไตล์รายชื่อพนักงาน (Staff Grid)
-   ========================================== */
 .staff-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -213,9 +203,6 @@ input[type="month"] {
   background: rgba(255, 255, 255, 0.8);
 }
 
-/* ==========================================
-   6. สไตล์ปุ่มกดต่างๆ (Buttons)
-   ========================================== */
 .btn {
   border: none;
   padding: 10px 18px;
@@ -270,9 +257,6 @@ input[type="month"] {
   justify-content: flex-end;
 }
 
-/* ==========================================
-   7. สไตล์สถิติและกราฟ (Stats & Chart)
-   ========================================== */
 .stats-bar {
   display: flex;
   flex-wrap: wrap;
@@ -321,9 +305,6 @@ input[type="month"] {
   color: var(--text-secondary);
 }
 
-/* ==========================================
-   8. สไตล์ประวัติย้อนหลังและการพิมพ์ (History & Print)
-   ========================================== */
 .history-list {
   display: flex;
   flex-direction: column;
@@ -403,23 +384,50 @@ input[type="month"] {
   display: none;
 }
 
+/* 💡 ตั้งค่าการพิมพ์ให้แสดงผลเฉพาะเนื้อหาที่เลือก และจำกัดความสูงให้อยู่ในหน้าเดียวพอดี */
+/* ==========================================
+   ตั้งค่าการสั่งพิมพ์ (Print Settings) บังคับให้จบใน 1 หน้าเป๊ะ
+   ========================================== */
+/* ==========================================
+   ตั้งค่าการสั่งพิมพ์ (Print Settings) ขยายขนาดตัวอักษร
+   ========================================== */
 @media print {
+  /* ซ่อนองค์ประกอบอื่นๆ ทั้งหมดบนหน้าเว็บตอนสั่งพิมพ์ */
   body * {
     visibility: hidden !important;
   }
+  
+  /* แสดงผลเฉพาะกล่อง #printArea ที่ใช้เก็บข้อความพิมพ์ */
   #printArea, #printArea * {
     visibility: visible !important;
   }
+  
+  /* ขยายขนาดฟอนต์และปรับการแสดงผลให้อยู่ในหน้าเดียวพอดี */
   #printArea {
     display: block !important;
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    padding: 20px;
-    font-size: 16px;
-    white-space: pre-wrap;
-    font-family: monospace, 'Noto Sans Thai';
-    color: #000;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    max-height: 100vh !important;
+    padding: 10px !important;
+    margin: 0 !important;
+    font-size: 16px !important;       /* 💡 เพิ่มขนาดตัวอักษรให้ใหญ่ขึ้น (จากเดิม 11px/12px) */
+    line-height: 1.5 !important;      /* 💡 เพิ่มความห่างระหว่างบรรทัดให้อ่านง่ายขึ้น */
+    white-space: pre-wrap !important;
+    font-family: monospace, 'Noto Sans Thai' !important;
+    color: #000 !important;
+    background: #fff !important;
+    overflow: hidden !important;
+    page-break-after: avoid !important;
+    page-break-before: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* กำหนดระยะขอบกระดาษให้น้อยที่สุด เพื่อให้เนื้อหาขยายเต็มหน้ากระดาษ */
+  @page {
+    size: auto;
+    margin: 5mm;
   }
 }
