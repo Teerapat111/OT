@@ -28,6 +28,7 @@
     <section class="panel">
       <div class="section-title-bar">
         <h2>📝 กรอกข้อมูลขออนุมัติ</h2>
+        <!-- ปุ่มรีเซ็ตฟอร์มทั้งหมด -->
         <button type="button" id="resetFormBtn" class="btn btn-warning btn-sm">🔄 รีเซ็ตข้อมูลฟอร์ม</button>
       </div>
       <br>
@@ -60,7 +61,7 @@
         </div>
       </div>
 
-      <!-- กล่องสรุปผลเวลา -->
+      <!-- กล่องแสดงผลสรุปเวลาและชั่วโมง OT -->
       <div id="timeSummaryBox" class="time-summary-card"></div>
 
       <hr class="divider">
@@ -74,10 +75,11 @@
             <button type="button" id="addTaskBtn" class="btn btn-secondary btn-sm">+ เพิ่มเนื้อหางาน</button>
           </div>
         </div>
+        <!-- พื้นที่แสดงรายการช่องกรอกงาน -->
         <div id="taskList" class="task-list-container"></div>
       </div>
 
-      <!-- ช่องปัญหาและอุปสรรค -->
+      <!-- ช่องกรอกปัญหาและอุปสรรค -->
       <div class="form-group">
         <label>‼️ ปัญหาและอุปสรรค</label>
         <input type="text" id="obstacleText" class="mac-input" value="-">
@@ -94,13 +96,15 @@
             <button type="button" id="addNewStaffBtn" class="btn btn-secondary btn-sm">+ เพิ่มชื่อพนักงานใหม่</button>
           </div>
         </div>
+        <!-- พื้นที่แสดงรายชื่อพนักงานรูปแบบ Checkbox -->
         <div id="staffCheckboxContainer" class="staff-grid"></div>
       </div>
 
-      <!-- ปุ่มกดหลัก (สรุปข้อความ & บันทึกประวัติ) -->
+      <!-- ปุ่มกดหลัก: สรุปข้อความ, บันทึกประวัติใหม่, และปุ่มยกเลิกการแก้ไข (ซ่อนไว้ตอนสร้างใหม่) -->
       <div class="action-buttons">
         <button type="button" id="generateTextBtn" class="btn btn-primary">⚡ สรุปข้อความ</button>
         <button type="button" id="saveRecordBtn" class="btn btn-success">💾 บันทึกประวัติลงเครื่อง</button>
+        <button type="button" id="cancelEditBtn" class="btn btn-secondary" style="display: none;">❌ ยกเลิกการแก้ไข</button>
       </div>
     </section>
 
@@ -134,7 +138,7 @@
       </div>
     </section>
 
-    <!-- ส่วนที่ 4: ประวัติย้อนหลัง -->
+    <!-- ส่วนที่ 4: แสดงประวัติย้อนหลัง -->
     <section class="panel">
       <div class="section-title-bar">
         <h2>📜 ประวัติบันทึกการทำ OT ย้อนหลัง</h2>
@@ -143,7 +147,7 @@
     </section>
   </div>
 
-  <!-- พื้นสำหรับแสดงข้อความเฉพาะกิจตอนสั่งพิมพ์ (Print) ให้พอดีหน้าเดียว -->
+  <!-- พื้นที่สำหรับแสดงข้อความเฉพาะกิจตอนสั่งพิมพ์ (Print) ให้พอดีหน้าเดียว -->
   <div id="printArea" class="print-only"></div>
 
   <!-- เชื่อมโยงไฟล์สคริปต์หลัก -->

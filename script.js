@@ -15,12 +15,15 @@ let staffList = [
   "นาย ชัยมงคล จับจิตร์"
 ];
 
-// โหลดรายละเอียดงานล่าสุดจากหน่วยความจำเครื่อง (ถ้าไม่มีให้เริ่มต้นด้วยค่าว่างเปล่า 1 บรรทัด)
+// โหลดรายละเอียดงานล่าสุดจาก LocalStorage (ถ้าไม่มีให้เริ่มต้นด้วยค่าว่าง 1 บรรทัด)
 let tasks = JSON.parse(localStorage.getItem('lastTasks')) || [""];
 
 // โหลดประวัติการทำงานย้อนหลังทั้งหมดจาก LocalStorage
 let otHistory = JSON.parse(localStorage.getItem('otHistoryRecords')) || [];
 let yearlyChart = null;
+
+// [เพิ่มใหม่] ตัวแปรเก็บ ID ของรายการที่กำลังแก้ไข (ถ้าเป็น null แปลว่าสร้างใหม่)
+let editingRecordId = null;
 
 // ==========================================
 // 2. ฟังก์ชันเริ่มต้นทำงานเมื่อโหลดหน้าเว็บ (DOM Content Loaded)
@@ -30,36 +33,35 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('workDate').value = today.toISOString().split('T')[0];
   document.getElementById('filterMonth').value = today.toISOString().slice(0, 7);
 
-  // โหลดค่าชื่อโครงการล่าสุด (ถ้าไม่มีในเครื่อง ให้เป็นค่าว่างเปล่า "")
+  // โหลดค่าชื่อโครงการล่าสุด
   const savedProject = localStorage.getItem('lastProjectName');
   document.getElementById('projectName').value = savedProject !== null ? savedProject : "";
 
-  // โหลดค่าสถานที่ปฏิบัติงานล่าสุด (ถ้าไม่มีในเครื่อง ให้เป็นค่าว่างเปล่า "")
+  // โหลดค่าสถานที่ปฏิบัติงานล่าสุด
   const savedLocation = localStorage.getItem('lastLocationName');
   document.getElementById('locationName').value = savedLocation !== null ? savedLocation : "";
 
-  // โหลดค่าปัญหาและอุปสรรคล่าสุด (ถ้าไม่มีให้เป็น "-")
+  // โหลดค่าปัญหาและอุปสรรคล่าสุด
   const savedObstacle = localStorage.getItem('lastObstacleText');
   document.getElementById('obstacleText').value = savedObstacle !== null ? savedObstacle : "-";
 
-  // โหลดเวลาเริ่มงานล่าสุด (ถ้าไม่มีให้เป็น 00:00)
+  // โหลดเวลาเริ่มงานล่าสุด
   const savedStartTime = localStorage.getItem('lastStartTime');
   document.getElementById('startTime').value = savedStartTime ? savedStartTime : "00:00";
 
-  // โหลดเวลาเลิกงานล่าสุด (ถ้าไม่มีให้เป็น 00:00)
+  // โหลดเวลาเลิกงานล่าสุด
   const savedEndTime = localStorage.getItem('lastEndTime');
   document.getElementById('endTime').value = savedEndTime ? savedEndTime : "00:00";
 
-  // แสดงผลตารางงาน รายชื่อพนักงาน และคำนวณเวลาเริ่มต้น
+  // แสดงผลตารางงาน, รายชื่อพนักงาน, คำนวณเวลา, และประวัติ
   renderTasks();
   renderStaffCheckboxes();
   calculateTime();
-  
   renderHistory();
   updateMonthlySummary();
   initYearlyChart();
 
-  // ผูกเหตุการณ์บันทึกข้อมูลชื่อโครงการอัตโนมัติทันทีที่พิมพ์
+  // ผูกเหตุการณ์บันทึกข้อมูลชื่อโครงการอัตโนมัติเมื่อพิมพ์
   document.getElementById('projectName').addEventListener('input', (e) => {
     localStorage.setItem('lastProjectName', e.target.value);
   });
@@ -74,13 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('lastObstacleText', e.target.value);
   });
 
-  // ผูกเหตุการณ์บันทึกเวลาเริ่มงานอัตโนมัติเมื่อมีการเปลี่ยนแปลง
+  // ผูกเหตุการณ์บันทึกเวลาเริ่มงานอัตโนมัติ
   document.getElementById('startTime').addEventListener('change', (e) => {
     localStorage.setItem('lastStartTime', e.target.value);
     calculateTime();
   });
 
-  // ผูกเหตุการณ์บันทึกเวลาเลิกงานอัตโนมัติเมื่อมีการเปลี่ยนแปลง
+  // ผูกเหตุการณ์บันทึกเวลาเลิกงานอัตโนมัติ
   document.getElementById('endTime').addEventListener('change', (e) => {
     localStorage.setItem('lastEndTime', e.target.value);
     calculateTime();
@@ -93,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('addNewStaffBtn').addEventListener('click', addNewStaffPrompt);
   document.getElementById('generateTextBtn').addEventListener('click', generateOutputText);
   document.getElementById('saveRecordBtn').addEventListener('click', saveOTRecord);
+  document.getElementById('cancelEditBtn').addEventListener('click', cancelEditMode); // [เพิ่มใหม่] ปุ่มยกเลิกโหมดแก้ไข
   document.getElementById('copyTextBtn').addEventListener('click', copyToClipboard);
   document.getElementById('filterMonth').addEventListener('change', updateMonthlySummary);
   document.getElementById('resetFormBtn').addEventListener('click', resetFormInputs);
@@ -118,7 +121,7 @@ function calculateTime() {
   }
 
   const totalMins = endTotalMins - startTotalMins;
-  const normalLimitMins = 9 * 60; // กำหนดเวลาทำงานปกติ 9 ชั่วโมงรวมพัก 1 ชั่วโมง
+  const normalLimitMins = 9 * 60; // ทำงานปกติ 9 ชั่วโมงรวมพัก 1 ชั่วโมง
 
   let normalEndTotal = startTotalMins + normalLimitMins;
   let normalEndH = Math.floor((normalEndTotal % (24 * 60)) / 60);
@@ -164,17 +167,16 @@ function calculateTime() {
 // ==========================================
 function resetFormInputs() {
   if (confirm("คุณต้องการล้างข้อมูลในฟอร์มทั้งหมดให้ว่างใช่หรือไม่?")) {
+    cancelEditMode(); // ออกจากโหมดแก้ไขถ้ากำลังแก้ไขอยู่
     const today = new Date();
     document.getElementById('workDate').value = today.toISOString().split('T')[0];
 
-    // ล้างค่าในช่องกรอกให้เป็นค่าว่างทั้งหมด
     document.getElementById('startTime').value = "00:00";
     document.getElementById('endTime').value = "00:00";
     document.getElementById('projectName').value = "";
     document.getElementById('locationName').value = "";
     document.getElementById('obstacleText').value = "-";
 
-    // ล้างค่าความจำใน LocalStorage ทั้งหมด
     localStorage.removeItem('lastStartTime');
     localStorage.removeItem('lastEndTime');
     localStorage.removeItem('lastProjectName');
@@ -186,12 +188,10 @@ function resetFormInputs() {
     tasks = [""];
     renderTasks();
 
-    // เอาติ๊กถูกรายชื่อพนักงานออกทั้งหมด
     document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
     document.getElementById('outputResult').value = "";
 
     calculateTime();
-
     alert("🔄 รีเซ็ตข้อมูลฟอร์มเรียบร้อยแล้ว!");
   }
 }
@@ -232,7 +232,6 @@ function removeTask(index) {
   localStorage.setItem('lastTasks', JSON.stringify(tasks));
 }
 
-// ปุ่มรีเฟรชเฉพาะช่องรายละเอียดงาน (เคลียร์ให้เป็นค่าว่าง)
 function refreshTasksData() {
   tasks = [""];
   localStorage.setItem('lastTasks', JSON.stringify(tasks));
@@ -241,7 +240,7 @@ function refreshTasksData() {
 }
 
 // ==========================================
-// 6. ฟังก์ชันจัดการรายชื่อพนักงาน (Staff Checkboxes & Refresh Staff)
+// 6. ฟังก์ชันจัดการรายชื่อพนักงาน (Staff Checkboxes)
 // ==========================================
 function renderStaffCheckboxes() {
   const container = document.getElementById('staffCheckboxContainer');
@@ -253,13 +252,7 @@ function renderStaffCheckboxes() {
     const label = document.createElement('label');
     label.className = 'staff-checkbox-item';
     
-    let isChecked = false;
-    // ถ้ามีข้อมูลในเครื่องให้เช็คตามนั้น ถ้าไม่มีให้เป็น false (ไม่ติ๊กใครเลย)
-    if (savedSelectedStaff !== null) {
-      isChecked = savedSelectedStaff.includes(name);
-    } else {
-      isChecked = false; 
-    }
+    let isChecked = savedSelectedStaff !== null ? savedSelectedStaff.includes(name) : false;
 
     label.innerHTML = `
       <input type="checkbox" value="${name}" class="staff-check" ${isChecked ? 'checked' : ''} onchange="saveStaffSelection()">
@@ -274,7 +267,6 @@ function saveStaffSelection() {
   localStorage.setItem('lastSelectedStaff', JSON.stringify(selectedStaff));
 }
 
-// ปุ่มรีเฟรชเฉพาะรายชื่อพนักงาน (เคลียร์ติ๊กออกทั้งหมด)
 function refreshStaffData() {
   document.querySelectorAll('.staff-check').forEach(cb => cb.checked = false);
   localStorage.setItem('lastSelectedStaff', JSON.stringify([]));
@@ -290,7 +282,7 @@ function addNewStaffPrompt() {
 }
 
 // ==========================================
-// 7. ฟังก์ชันแปลงวันที่เป็นรูปแบบภาษาไทย (Format Thai Date)
+// 7. ฟังก์ชันแปลงวันที่เป็นรูปแบบภาษาไทย
 // ==========================================
 function formatThaiDate(dateStr) {
   if (!dateStr) return '';
@@ -304,7 +296,7 @@ function formatThaiDate(dateStr) {
 }
 
 // ==========================================
-// 8. ฟังก์ชันสร้างข้อความสรุปขออนุมัติ OT (Generate Text)
+// 8. ฟังก์ชันสร้างข้อความสรุปขออนุมัติ OT
 // ==========================================
 function generateOutputText() {
   const rawDate = document.getElementById('workDate').value;
@@ -354,7 +346,7 @@ ${staffTextLines.join('\n')}
 }
 
 // ==========================================
-// 9. ฟังก์ชันคัดลอกข้อความไปยังคลิปบอร์ด (Copy to Clipboard)
+// 9. ฟังก์ชันคัดลอกข้อความไปยังคลิปบอร์ด
 // ==========================================
 function copyToClipboard() {
   const txtArea = document.getElementById('outputResult');
@@ -367,7 +359,7 @@ function copyToClipboard() {
 }
 
 // ==========================================
-// 10. ฟังก์ชันบันทึกประวัติลง LocalStorage ของเครื่อง (Save Record)
+// 10. ฟังก์ชันบันทึกประวัติ หรือ บันทึกการแก้ไข (Save / Update Record) [อัปเดตใหม่]
 // ==========================================
 function saveOTRecord() {
   const rawDate = document.getElementById('workDate').value;
@@ -380,25 +372,55 @@ function saveOTRecord() {
     return;
   }
 
-  const newRecord = {
-    id: Date.now(),
-    date: rawDate,
-    project: document.getElementById('projectName').value,
-    otMins: otMins,
-    fullText: fullText
-  };
+  const selectedStaff = Array.from(document.querySelectorAll('.staff-check:checked')).map(cb => cb.value);
 
-  otHistory.unshift(newRecord);
+  // ตรวจสอบว่ากำลังอยู่ในโหมดแก้ไขรายการเดิมอยู่หรือไม่
+  if (editingRecordId !== null) {
+    // โหมดอัปเดตข้อมูลทับรายการเดิม
+    const rec = otHistory.find(r => r.id == editingRecordId);
+    if (rec) {
+      rec.date = rawDate;
+      rec.project = document.getElementById('projectName').value;
+      rec.location = document.getElementById('locationName').value;
+      rec.startTime = document.getElementById('startTime').value;
+      rec.endTime = document.getElementById('endTime').value;
+      rec.tasks = [...tasks];
+      rec.obstacle = document.getElementById('obstacleText').value;
+      rec.selectedStaff = selectedStaff;
+      rec.otMins = otMins;
+      rec.fullText = fullText;
+    }
+    alert('💾 บันทึกการแก้ไขเรียบร้อยแล้ว!');
+    cancelEditMode(); // ออกจากโหมดแก้ไขและคืนค่าปุ่มเดิม
+  } else {
+    // โหมดสร้างรายการใหม่เพิ่มเข้าไป
+    const newRecord = {
+      id: Date.now(),
+      date: rawDate,
+      project: document.getElementById('projectName').value,
+      location: document.getElementById('locationName').value,
+      startTime: document.getElementById('startTime').value,
+      endTime: document.getElementById('endTime').value,
+      tasks: [...tasks],
+      obstacle: document.getElementById('obstacleText').value,
+      selectedStaff: selectedStaff,
+      otMins: otMins,
+      fullText: fullText
+    };
+
+    otHistory.unshift(newRecord);
+    alert('💾 บันทึกประวัติลงเครื่องเรียบร้อยแล้ว!');
+  }
+
+  // บันทึกลง LocalStorage และรีเฟรชหน้าจอแสดงผล
   localStorage.setItem('otHistoryRecords', JSON.stringify(otHistory));
-
-  alert('💾 บันทึกประวัติลงเครื่องเรียบร้อยแล้ว!');
   renderHistory();
   updateMonthlySummary();
   initYearlyChart();
 }
 
 // ==========================================
-// 11. ฟังก์ชันแสดงรายการประวัติย้อนหลัง พร้อมระบบลากสลับตำแหน่งและปุ่มปริ้นท์แยก
+// 11. ฟังก์ชันแสดงรายการประวัติย้อนหลัง พร้อมระบบลากสลับตำแหน่ง
 // ==========================================
 function renderHistory() {
   const container = document.getElementById('historyListContainer');
@@ -478,7 +500,7 @@ function handleDragEnd() {
 }
 
 // ==========================================
-// 12. ฟังก์ชันสลับลำดับประวัติขึ้น-ลงด้วยปุ่มลูกศร (Move History)
+// 12. ฟังก์ชันสลับลำดับประวัติขึ้น-ลงด้วยปุ่มลูกศร
 // ==========================================
 function moveHistory(index, direction) {
   const newIndex = index + direction;
@@ -492,7 +514,7 @@ function moveHistory(index, direction) {
 }
 
 // ==========================================
-// 13. ฟังก์ชันโหลดข้อความประวัติเก่ามาแสดงที่กล่องข้อความด้านบน (Load to Text)
+// 13. ฟังก์ชันโหลดข้อความประวัติเก่ามาแสดงที่กล่องข้อความด้านบน
 // ==========================================
 function loadHistoryToText(id) {
   const rec = otHistory.find(r => r.id == id);
@@ -503,23 +525,66 @@ function loadHistoryToText(id) {
 }
 
 // ==========================================
-// 14. ฟังก์ชันแก้ไขข้อความในประวัติย้อนหลัง (Edit History)
+// 14. ฟังก์ชันดึงข้อมูลประวัติขึ้นมาแก้ไขที่ฟอร์มด้านบน (Edit History) [เพิ่มใหม่]
 // ==========================================
 function editHistory(id) {
   const rec = otHistory.find(r => r.id == id);
   if (!rec) return;
 
-  const updatedText = prompt("แก้ไขข้อความขออนุมัติ OT:", rec.fullText);
-  if (updatedText !== null) {
-    rec.fullText = updatedText;
-    localStorage.setItem('otHistoryRecords', JSON.stringify(otHistory));
-    renderHistory();
-    alert('✏️ แก้ไขข้อมูลเรียบร้อยแล้ว!');
-  }
+  // บันทึก ID รายการที่กำลังแก้ไขลงในตัวแปรกลาง
+  editingRecordId = rec.id;
+
+  // นำข้อมูลเดิมหยอดกลับลงในช่องฟอร์มกรอกข้อมูลด้านบน
+  document.getElementById('workDate').value = rec.date || '';
+  document.getElementById('projectName').value = rec.project || '';
+  document.getElementById('locationName').value = rec.location || '';
+  document.getElementById('startTime').value = rec.startTime || '00:00';
+  document.getElementById('endTime').value = rec.endTime || '00:00';
+  document.getElementById('obstacleText').value = rec.obstacle || '-';
+
+  // โหลดรายการงานกลับมาแสดงในช่องฟอร์มงาน
+  tasks = rec.tasks && rec.tasks.length > 0 ? [...rec.tasks] : [''];
+  renderTasks();
+  localStorage.setItem('lastTasks', JSON.stringify(tasks));
+
+  // ติ๊กเลือกรายชื่อพนักงานตามประวัติที่บันทึกไว้
+  const staffCheckboxes = document.querySelectorAll('.staff-check');
+  staffCheckboxes.forEach(cb => {
+    if (rec.selectedStaff && rec.selectedStaff.includes(cb.value)) {
+      cb.checked = true;
+    } else {
+      cb.checked = false;
+    }
+  });
+  saveStaffSelection();
+
+  // คำนวณเวลาและชั่วโมง OT ใหม่ตามข้อมูลที่ดึงมา
+  calculateTime();
+
+  // แสดงข้อความพรีวิวในกล่องผลลัพธ์
+  document.getElementById('outputResult').value = rec.fullText || '';
+
+  // เปลี่ยนหน้าตาปุ่มบันทึกเป็น "บันทึกการแก้ไข" และแสดงปุ่มยกเลิก
+  const saveBtn = document.getElementById('saveRecordBtn');
+  saveBtn.innerText = '💾 บันทึกการแก้ไข';
+  saveBtn.className = 'btn btn-warning';
+  document.getElementById('cancelEditBtn').style.display = 'inline-block';
+
+  // เลื่อนหน้าจอขึ้นไปด้านบนสุดเพื่อให้ผู้ใช้เห็นฟอร์มที่ดึงข้อมูลมา
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// [เพิ่มใหม่] ฟังก์ชันยกเลิกโหมดแก้ไข กลับสู่สถานะบันทึกปกติ
+function cancelEditMode() {
+  editingRecordId = null;
+  const saveBtn = document.getElementById('saveRecordBtn');
+  saveBtn.innerText = '💾 บันทึกประวัติลงเครื่อง';
+  saveBtn.className = 'btn btn-success';
+  document.getElementById('cancelEditBtn').style.display = 'none';
 }
 
 // ==========================================
-// 15. ฟังก์ชันลบประวัติย้อนหลังออกจากเครื่อง (Delete History)
+// 15. ฟังก์ชันลบประวัติย้อนหลังออกจากเครื่อง
 // ==========================================
 function deleteHistory(id) {
   if (confirm('คุณต้องการลบประวัตินี้ใช่หรือไม่?')) {
@@ -532,7 +597,7 @@ function deleteHistory(id) {
 }
 
 // ==========================================
-// 16. ฟังก์ชันพิมพ์รายงานเฉพาะรายการที่เลือก (Print Single Record)
+// 16. ฟังก์ชันพิมพ์รายงานเฉพาะรายการที่เลือก
 // ==========================================
 function printSingleRecord(id) {
   const rec = otHistory.find(r => r.id == id);
@@ -543,7 +608,7 @@ function printSingleRecord(id) {
 }
 
 // ==========================================
-// 17. ฟังก์ชันคำนวณและอัปเดตสถิติ OT รวมรายเดือน (Monthly Summary)
+// 17. ฟังก์ชันคำนวณและอัปเดตสถิติ OT รวมรายเดือน
 // ==========================================
 function updateMonthlySummary() {
   const selectedMonth = document.getElementById('filterMonth').value;
@@ -558,7 +623,7 @@ function updateMonthlySummary() {
 }
 
 // ==========================================
-// 18. ฟังก์ชันวาดกราฟเส้นแสดงสถิติ OT รายปีด้วย Chart.js (Yearly Analytics Chart)
+// 18. ฟังก์ชันวาดกราฟเส้นแสดงสถิติ OT รายปีด้วย Chart.js
 // ==========================================
 function initYearlyChart() {
   const ctx = document.getElementById('yearlyOtChart').getContext('2d');

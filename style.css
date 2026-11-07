@@ -1,3 +1,4 @@
+/* กำหนดค่าตัวแปรสีและดีไซน์หลักแบบ Modern Glassmorphism */
 :root {
   --bg-gradient: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
   --panel-bg: rgba(255, 255, 255, 0.75);
@@ -236,6 +237,7 @@ input[type="month"] {
   display: flex;
   gap: 10px;
   margin-top: 14px;
+  flex-wrap: wrap;
 }
 
 .mac-textarea {
@@ -384,25 +386,16 @@ input[type="month"] {
   display: none;
 }
 
-/* 💡 ตั้งค่าการพิมพ์ให้แสดงผลเฉพาะเนื้อหาที่เลือก และจำกัดความสูงให้อยู่ในหน้าเดียวพอดี */
-/* ==========================================
-   ตั้งค่าการสั่งพิมพ์ (Print Settings) บังคับให้จบใน 1 หน้าเป๊ะ
-   ========================================== */
-/* ==========================================
-   ตั้งค่าการสั่งพิมพ์ (Print Settings) ขยายขนาดตัวอักษร
-   ========================================== */
+/* ตั้งค่าการสั่งพิมพ์เอกสารให้อยู่ในหน้าเดียวพอดี */
 @media print {
-  /* ซ่อนองค์ประกอบอื่นๆ ทั้งหมดบนหน้าเว็บตอนสั่งพิมพ์ */
   body * {
     visibility: hidden !important;
   }
   
-  /* แสดงผลเฉพาะกล่อง #printArea ที่ใช้เก็บข้อความพิมพ์ */
   #printArea, #printArea * {
     visibility: visible !important;
   }
   
-  /* ขยายขนาดฟอนต์และปรับการแสดงผลให้อยู่ในหน้าเดียวพอดี */
   #printArea {
     display: block !important;
     position: absolute !important;
@@ -413,8 +406,8 @@ input[type="month"] {
     max-height: 100vh !important;
     padding: 10px !important;
     margin: 0 !important;
-    font-size: 16px !important;       /* 💡 เพิ่มขนาดตัวอักษรให้ใหญ่ขึ้น (จากเดิม 11px/12px) */
-    line-height: 1.5 !important;      /* 💡 เพิ่มความห่างระหว่างบรรทัดให้อ่านง่ายขึ้น */
+    font-size: 16px !important;
+    line-height: 1.5 !important;
     white-space: pre-wrap !important;
     font-family: monospace, 'Noto Sans Thai' !important;
     color: #000 !important;
@@ -425,7 +418,6 @@ input[type="month"] {
     page-break-inside: avoid !important;
   }
 
-  /* กำหนดระยะขอบกระดาษให้น้อยที่สุด เพื่อให้เนื้อหาขยายเต็มหน้ากระดาษ */
   @page {
     size: auto;
     margin: 5mm;
